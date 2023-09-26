@@ -1,73 +1,69 @@
-var API = "https://restcountries.com/v3.1/all";
-
-
-var fet = fetch(API)
-  .then((response) => response.json())
-  .then((data) => {
-    
-    data.map((value) => {
-      var spreadOperator = {
-        ...value,
-        name: value.name.common,
-        flag: value.flags.png,
-        code: value.cioc,
-        capital: value.capital,
-        region: value.region,
-        population: value.population,
-        latitude: value.latlng[0],
-        longitude: value.latlng[1]
-
-      };
-      createcountry(spreadOperator);
-      
-      
-     
-        // console.log(value)
-    })
-  })
+function fetchDefinitions(word) {
+    return new Promise((resolve, reject) => {
+      fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to fetch definitions');
+          }
+          return response.json();
+        })
+        .then(data => {
+          resolve(data);
+        })
+        .catch(error => {
+          reject(error.message);
+        });
+    });
+  }
   
+  function displayDefinitions(definitions) {
+    let definitionsElement = document.getElementById('definitions');
+    definitionsElement.innerHTML = '';
   
-   
-function createcountry({ name, flag, code, capital, region, population,latitude,longitude }) {
-   
-  document.body.innerHTML += 
-  ` <div class="container">
-    <div class="card"  >
-    <h1 id="title" class="text-center">${name}</h1>
-    <img src="${flag}" class="flag" alt="${name}'Flag image">
- 
-  <div class="card-body car" >
-  <p><span>Population :</span>${population}</p>
-  <p><span>Captial :</span> ${capital}</p>
-  <p><span>Region :</span> ${region}</p>
-  <p><span>Country Code :</span>${code}</p>
-  <a href="#" class="btn btn-primary" onclick=(block(${latitude},${longitude},${name})) >Click for Weather</a>
- <div id=${name}>   </div>
+    if (definitions.length === 0) {
+        let alert = document.createElement('div');
+      alert.classList.add('alert', 'alert-warning');
+      alert.textContent = 'No definitions found.';
+      definitionsElement.appendChild(alert);
+    } else {
+      definitions.forEach(definition => {
+        let card = document.createElement('div');
+        card.classList.add('card', 'mb-3');
   
- 
-  </div>
-</div>
-</div>
-`
-}
-
-
-
-function block(lat,lng,name){
-
-  var WAPI = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=06e423ec0af839c485470951f60c3f6b`
-   
-  console.log(name)
- fetch(WAPI)
- .then((response) => response.json())
- .then((data)=> {
-
-     alert(`
-               For ${name.id}  
-     Current Humidity is ${data.main.humidity}
-     Current Pressure is ${data.main.pressure}
-     Current Temperature is ${data.main.temp}`)
-    })
-}
+        let cardBody = document.createElement('div');
+        cardBody.classList.add('card-body');
   
-document.addEventListener("click",(event) => event.preventDefault())
+        let partOfSpeech = document.createElement('h5');
+        partOfSpeech.classList.add('card-title');
+        partOfSpeech.textContent = definition.meanings[0].partOfSpeech;
+        cardBody.appendChild(partOfSpeech);
+  
+        definition.meanings.forEach(meaning => {
+            let definitionText = document.createElement('p');
+          definitionText.textContent = meaning.definitions[0].definition;
+          cardBody.appendChild(definitionText);
+        });
+  
+        card.appendChild(cardBody);
+        definitionsElement.appendChild(card);
+      });
+    }
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    let searchBtn = document.getElementById('searchBtn');
+  
+    searchBtn.addEventListener('click', () => {
+        let wordInput = document.getElementById('wordInput');
+        let word = wordInput.value.trim();
+  
+      fetchDefinitions(word)
+        .then(definitions => {
+          displayDefinitions(definitions);
+        })
+        .catch(error => {
+          console.log('Error fetching definitions:', error);
+        });
+    });
+  });
+  
